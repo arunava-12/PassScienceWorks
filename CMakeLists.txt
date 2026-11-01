@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(NOT WIN32)
+    message(FATAL_ERROR "PassScienceWorkbench GUI currently targets Windows.")
+endif()
+
 find_package(Threads REQUIRED)
 
 # Thermal FEM core
@@ -60,14 +64,20 @@ target_include_directories(hardware_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/hardware
 )
 
-# Main application
-add_executable(Launch
-    src/main.cpp
+# Unified native Windows GUI application
+add_executable(Launch WIN32
+    src/ui/MainWindow.cpp
 )
 
 target_link_libraries(Launch PRIVATE
     thermal_core
     geometry_core
+    performance_core
+    hardware_core
+    user32
+    gdi32
+    comdlg32
+    Threads::Threads
 )
 
 # Separate benchmark application
@@ -99,28 +109,24 @@ target_link_libraries(HardwareRunner PRIVATE
 
 # Compiler warnings
 if(MSVC)
-    target_compile_options(thermal_core PRIVATE /W4)
-    target_compile_options(geometry_core PRIVATE /W4)
-    target_compile_options(performance_core PRIVATE /W4)
-    target_compile_options(neural_core PRIVATE /W4)
-    target_compile_options(hardware_core PRIVATE /W4)
-
-    target_compile_options(Launch PRIVATE /W4)
-    target_compile_options(BenchmarkRunner PRIVATE /W4)
-    target_compile_options(BackpropRunner PRIVATE /W4)
-    target_compile_options(HardwareRunner PRIVATE /W4)
+    set(WARNING_FLAGS /W4)
 else()
-    target_compile_options(thermal_core PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(geometry_core PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(performance_core PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(neural_core PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(hardware_core PRIVATE -Wall -Wextra -Wpedantic)
-
-    target_compile_options(Launch PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(BenchmarkRunner PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(BackpropRunner PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(HardwareRunner PRIVATE -Wall -Wextra -Wpedantic)
+    set(WARNING_FLAGS -Wall -Wextra -Wpedantic)
 endif()
+
+foreach(target
+    thermal_core
+    geometry_core
+    performance_core
+    neural_core
+    hardware_core
+    Launch
+    BenchmarkRunner
+    BackpropRunner
+    HardwareRunner
+)
+    target_compile_options(${target} PRIVATE ${WARNING_FLAGS})
+endforeach()
 
 # Automated tests
 enable_testing()
@@ -130,7 +136,6 @@ add_executable(thermal_tests
 )
 
 target_link_libraries(thermal_tests PRIVATE thermal_core)
-
 add_test(NAME ThermalTests COMMAND thermal_tests)
 
 add_executable(geometry_tests
@@ -138,7 +143,6 @@ add_executable(geometry_tests
 )
 
 target_link_libraries(geometry_tests PRIVATE geometry_core)
-
 add_test(NAME GeometryTests COMMAND geometry_tests)
 
 add_executable(performance_tests
@@ -146,7 +150,6 @@ add_executable(performance_tests
 )
 
 target_link_libraries(performance_tests PRIVATE performance_core)
-
 add_test(NAME PerformanceTests COMMAND performance_tests)
 
 add_executable(neural_tests
@@ -154,14 +157,11 @@ add_executable(neural_tests
 )
 
 target_link_libraries(neural_tests PRIVATE neural_core)
-
 add_test(NAME NeuralTests COMMAND neural_tests)
 
-# Embedded hardware simulation tests
 add_executable(hardware_tests
     tests/hardware_tests.cpp
 )
 
 target_link_libraries(hardware_tests PRIVATE hardware_core)
-
 add_test(NAME HardwareTests COMMAND hardware_tests)
