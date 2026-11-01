@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(Threads REQUIRED)
+
 # Thermal FEM core
 add_library(thermal_core
     src/core/thermal/ThermalSolver.cpp
@@ -26,6 +28,20 @@ target_include_directories(geometry_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/geometry
 )
 
+# Performance and concurrency core
+add_library(performance_core
+    src/core/performance/Benchmark.cpp
+)
+
+target_include_directories(performance_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/performance
+)
+
+target_link_libraries(performance_core PUBLIC
+    thermal_core
+    Threads::Threads
+)
+
 # Main application
 add_executable(Launch
     src/main.cpp
@@ -36,15 +52,28 @@ target_link_libraries(Launch PRIVATE
     geometry_core
 )
 
+# Separate benchmark application
+add_executable(BenchmarkRunner
+    src/benchmark_main.cpp
+)
+
+target_link_libraries(BenchmarkRunner PRIVATE
+    performance_core
+)
+
 # Compiler warnings
 if(MSVC)
     target_compile_options(thermal_core PRIVATE /W4)
     target_compile_options(geometry_core PRIVATE /W4)
+    target_compile_options(performance_core PRIVATE /W4)
     target_compile_options(Launch PRIVATE /W4)
+    target_compile_options(BenchmarkRunner PRIVATE /W4)
 else()
     target_compile_options(thermal_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(geometry_core PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(performance_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(Launch PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(BenchmarkRunner PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Automated tests
@@ -65,3 +94,11 @@ add_executable(geometry_tests
 target_link_libraries(geometry_tests PRIVATE geometry_core)
 
 add_test(NAME GeometryTests COMMAND geometry_tests)
+
+add_executable(performance_tests
+    tests/performance_tests.cpp
+)
+
+target_link_libraries(performance_tests PRIVATE performance_core)
+
+add_test(NAME PerformanceTests COMMAND performance_tests)
