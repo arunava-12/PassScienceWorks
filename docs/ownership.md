@@ -12,8 +12,8 @@ AI assistance was used during parts of the development process. The assistance a
 
 I understand that I may be asked to explain the implementation, reproduce tests and make a small change during evaluation.
 
-**Developer:** [Enter full legal name]
+**Developer:** [ARUNAVA MONDAL]
 
-**Date:** [Enter submission date]
+**Date:** [2nd November 2026]
 
-**Signature:** [Sign if required]
+**Signature:** [Arunava]
