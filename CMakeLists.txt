@@ -42,6 +42,15 @@ target_link_libraries(performance_core PUBLIC
     Threads::Threads
 )
 
+# Manual backpropagation neural core
+add_library(neural_core
+    src/core/neural/Backpropagation.cpp
+)
+
+target_include_directories(neural_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/neural
+)
+
 # Main application
 add_executable(Launch
     src/main.cpp
@@ -61,19 +70,34 @@ target_link_libraries(BenchmarkRunner PRIVATE
     performance_core
 )
 
+# Backpropagation application
+add_executable(BackpropRunner
+    src/neural_main.cpp
+)
+
+target_link_libraries(BackpropRunner PRIVATE
+    neural_core
+)
+
 # Compiler warnings
 if(MSVC)
     target_compile_options(thermal_core PRIVATE /W4)
     target_compile_options(geometry_core PRIVATE /W4)
     target_compile_options(performance_core PRIVATE /W4)
+    target_compile_options(neural_core PRIVATE /W4)
+
     target_compile_options(Launch PRIVATE /W4)
     target_compile_options(BenchmarkRunner PRIVATE /W4)
+    target_compile_options(BackpropRunner PRIVATE /W4)
 else()
     target_compile_options(thermal_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(geometry_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(performance_core PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(neural_core PRIVATE -Wall -Wextra -Wpedantic)
+
     target_compile_options(Launch PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(BenchmarkRunner PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(BackpropRunner PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Automated tests
@@ -102,3 +126,11 @@ add_executable(performance_tests
 target_link_libraries(performance_tests PRIVATE performance_core)
 
 add_test(NAME PerformanceTests COMMAND performance_tests)
+
+add_executable(neural_tests
+    tests/neural_tests.cpp
+)
+
+target_link_libraries(neural_tests PRIVATE neural_core)
+
+add_test(NAME NeuralTests COMMAND neural_tests)
