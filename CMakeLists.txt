@@ -51,6 +51,15 @@ target_include_directories(neural_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/neural
 )
 
+# Embedded hardware simulation core
+add_library(hardware_core
+    src/core/hardware/MockDevices.cpp
+)
+
+target_include_directories(hardware_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/hardware
+)
+
 # Main application
 add_executable(Launch
     src/main.cpp
@@ -79,25 +88,38 @@ target_link_libraries(BackpropRunner PRIVATE
     neural_core
 )
 
+# Embedded hardware demonstration
+add_executable(HardwareRunner
+    src/hardware_main.cpp
+)
+
+target_link_libraries(HardwareRunner PRIVATE
+    hardware_core
+)
+
 # Compiler warnings
 if(MSVC)
     target_compile_options(thermal_core PRIVATE /W4)
     target_compile_options(geometry_core PRIVATE /W4)
     target_compile_options(performance_core PRIVATE /W4)
     target_compile_options(neural_core PRIVATE /W4)
+    target_compile_options(hardware_core PRIVATE /W4)
 
     target_compile_options(Launch PRIVATE /W4)
     target_compile_options(BenchmarkRunner PRIVATE /W4)
     target_compile_options(BackpropRunner PRIVATE /W4)
+    target_compile_options(HardwareRunner PRIVATE /W4)
 else()
     target_compile_options(thermal_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(geometry_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(performance_core PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(neural_core PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(hardware_core PRIVATE -Wall -Wextra -Wpedantic)
 
     target_compile_options(Launch PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(BenchmarkRunner PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(BackpropRunner PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(HardwareRunner PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Automated tests
@@ -134,3 +156,12 @@ add_executable(neural_tests
 target_link_libraries(neural_tests PRIVATE neural_core)
 
 add_test(NAME NeuralTests COMMAND neural_tests)
+
+# Embedded hardware simulation tests
+add_executable(hardware_tests
+    tests/hardware_tests.cpp
+)
+
+target_link_libraries(hardware_tests PRIVATE hardware_core)
+
+add_test(NAME HardwareTests COMMAND hardware_tests)
